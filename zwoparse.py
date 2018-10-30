@@ -128,6 +128,40 @@ class Segment:
                           sort_keys=True, indent=4)
 
 
+class Mrc(object):                                                                                                                                                           
+    _header="""[COURSE HEADER]
+VERSION = 2
+UNITS = ENGLISH
+DESCRIPTION = %s
+MINUTES	PERCENT
+[END COURSE HEADER]"""
+
+    def __init__(self, workout):
+        self.totaltime = 0 
+        self.workout  = workout
+
+    def header(self):
+        return self._header % self.workout['description']
+
+    def s_to_mrc(self, s): 
+        start = s.start_time/60.
+        end = s.end_time/60.
+        power2 = float(s.power.max_intensity)*100
+        if s.power.min_intensity:
+            power1 = float(s.power.min_intensity)*100
+        else:
+            power1 = power2
+        return [ "%.2f	%d\n" % (start, power1), "%.2f	%d\n" % (end, power2) ]
+
+    def create(self):
+        lines = []
+        lines.append(self._header % self.workout['description'])
+        lines.append("[COURSE DATA]\n")
+        for s in self.workout['segments']:
+            lines.extend(self.s_to_mrc(s))
+        lines.append("[END COURSE DATA]\n")
+        return lines
+
 def round_to_nearest_second(value):
     """ takes a floating point number of seconds as a string and returns
     the number of seconds as an integer """
@@ -329,9 +363,9 @@ def main():
     parser.add_argument(
         "-t",
         "--type",
-        choices=['txt', 'csv', 'json'],
+        choices=['txt', 'csv', 'json', 'mrc'],
         type=str,
-        help="The type of file to produce. csv = comma separated values file, txt = plain english. json = JavaScript object notation. The default is txt."
+        help="The type of file to produce. csv = comma separated values file, txt = plain english. json = JavaScript object notation. mrc = mrc file format. The default is txt."
     )
 
     parser.add_argument(
@@ -397,6 +431,9 @@ def main():
             lines.append('{"name": %s, "description" : %s, "segments":[%s]}' % (
                 json.dumps(workout['name']), json.dumps(workout['description']), segments_json))
 
+        elif filetype == "mrc":
+            lines = Mrc(workout).create()
+
         else:
             lines.append("%s\n\n" % workout['name'])
 
@@ -432,6 +469,7 @@ def main():
 
         text_file = open(outfile_with_extension, "w")
         for line in lines:
+            #print(line)
             text_file.write(line)
             if verbose:
                 sys.stdout.write(line)
