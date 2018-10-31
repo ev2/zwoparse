@@ -118,9 +118,9 @@ class Segment:
                 return "Rest Interval"
 
     def add_text_event(self, timeoffset, message):
-        timeoffset_relative = timeoffset - self.start_time
+        #timeoffset_relative = timeoffset - self.start_time
         self.textevents.append(
-            TextEvent(timeoffset, timeoffset_relative, message))
+            TextEvent(self.start_time+timeoffset, timeoffset, message))
 
     def toJSON(self):
         """ dumps self as json """
@@ -157,9 +157,16 @@ MINUTES	PERCENT
         lines = []
         lines.append(self._header % self.workout['description'])
         lines.append("[COURSE DATA]\n")
+        # ottengo anche i textevents
+        textevents=[]
         for s in self.workout['segments']:
             lines.extend(self.s_to_mrc(s))
+            textevents.extend(s.textevents)
         lines.append("[END COURSE DATA]\n")
+        lines.append("[COURSE TEXT]\n")
+        for t in textevents:
+            lines.append("%d	%s	15\n" % (t.timeoffset, t.message))
+        lines.append("[END COURSE TEXT]\n")
         return lines
 
 def round_to_nearest_second(value):
@@ -330,7 +337,7 @@ def main():
     kilos = float(71)
     filetype = "txt"
     filename = "workout"
-    verbose = True
+    verbose = False
     minduration = 0
 
     parser = argparse.ArgumentParser(description=(
