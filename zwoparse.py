@@ -162,10 +162,11 @@ MINUTES	PERCENT
         for s in self.workout['segments']:
             lines.extend(self.s_to_mrc(s))
             textevents.extend(s.textevents)
+            print(s.textevents)
         lines.append("[END COURSE DATA]\n")
         lines.append("[COURSE TEXT]\n")
         for t in textevents:
-            lines.append("%d	%s	15\n" % (t.timeoffset, t.message))
+            lines.append("%d	%s	15\n" % (t.timeoffset/60., t.message))
         lines.append("[END COURSE TEXT]\n")
         return lines
 
